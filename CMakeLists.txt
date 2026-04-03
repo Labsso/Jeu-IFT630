@@ -21,7 +21,12 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(raylib)
 
 # ---- Your executable ----
-add_executable(Jeu_IFT630 main.cpp)
+add_executable(Jeu_IFT630
+    main.cpp
+    globals.cpp
+    render.cpp
+    threads.cpp
+)
 
 # Link raylib
 target_link_libraries(Jeu_IFT630 raylib)
