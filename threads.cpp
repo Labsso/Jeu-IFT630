@@ -6,7 +6,7 @@
 #include <chrono>
 #include <vector>
 
-// Distributes units evenly across the arena height, one per lane slice.
+// Répartit les unités uniformément sur la hauteur de l'arène, une par tranche de couloir.
 void spawnWave(bool isEnemy, UnitType type, int availableGold) {
     Unit tmp; tmp.type = type;
     int cost = tmp.cost();
@@ -27,14 +27,14 @@ void spawnWave(bool isEnemy, UnitType type, int availableGold) {
         u.type    = type;
         u.isEnemy = isEnemy;
         u.laneY   = laneY;
-        u.x       = isEnemy ? 752.0f : 48.0f;  // spawn near own base edge
+        u.x       = isEnemy ? 752.0f : 48.0f;  // spawn près du bord de sa propre base
         u.y       = laneY;
         pool.alloc(u);
     }
 }
 
-// Thread 1 — runs every barrier tick.
-// Steps: rebuild spatial grid → compute moves/attacks/damage → flush render buffer.
+// Thread 1 — s'exécute à chaque tick de barrière.
+// Étapes : reconstruire la grille spatiale → calculer déplacements/attaques/dégâts → vider le tampon de rendu.
 void unitThread() {
     std::vector<int> nearby;
     while (running) {
@@ -45,7 +45,7 @@ void unitThread() {
         pool.tickAtkTimers();
         auto snap = pool.snapshot();
 
-        // Rebuild the grid from the current snapshot so nearby() queries are consistent.
+        // Reconstruire la grille à partir du snapshot courant pour que les requêtes nearby() soient cohérentes.
         {
             std::lock_guard lock(gridMutex);
             grid.clear();
@@ -66,7 +66,7 @@ void unitThread() {
                 grid.nearby(u.x, u.y, nearby);
             }
 
-            // Soft vertical push so units don't stack on each other.
+            // Poussée verticale douce pour éviter que les unités se superposent.
             float pushY = 0.0f;
             for (int j : nearby) {
                 if (j == i) continue;
@@ -79,7 +79,7 @@ void unitThread() {
                     pushY += (dy / d) * (minD - d) * 0.4f;
             }
 
-            // Full-range scan for the nearest enemy (AGGRO_RANGE > grid cell size).
+            // Scan complet pour trouver l'ennemi le plus proche (AGGRO_RANGE > taille d'une cellule de grille).
             int   bestTarget = -1;
             float bestDist   = AGGRO_RANGE;
             for (int j = 0; j < MAX_UNITS; j++) {
@@ -97,16 +97,16 @@ void unitThread() {
                 float contactDist = u.radius() + tgt.radius() + 2.0f;
 
                 if (dist <= contactDist) {
-                    // In contact: attack if cooldown allows.
+                    // En contact : attaquer si le délai de recharge le permet.
                     if (snap[i].atkTimer == 0) {
                         states.push_back({i, {UnitState::Attacking, bestTarget}});
-                        // Triangles ignore armor; all others are reduced by target armor.
+                        // Les triangles ignorent l'armure ; tous les autres sont réduits par l'armure de la cible.
                         int finalDmg = (u.type == UnitType::Triangle)
                                        ? u.damage()
                                        : std::max(0, u.damage() - tgt.armor());
                         if (finalDmg > 0) {
                             dmg.push_back({bestTarget, finalDmg});
-                            // Killing an enemy unit earns 3 gold.
+                            // Tuer une unité ennemie rapporte 3 pièces d'or.
                             if (tgt.isEnemy && tgt.hp - finalDmg <= 0)
                                 gold.fetch_add(3);
                         }
@@ -115,7 +115,7 @@ void unitThread() {
                     if (fabsf(pushY) > 0.01f)
                         moves.push_back({i, {u.x, ny}});
                 } else {
-                    // Not yet in range: steer toward enemy while applying push.
+                    // Pas encore à portée : se diriger vers l'ennemi tout en appliquant la poussée.
                     float len = dist > 0.0f ? dist : 1.0f;
                     float nx  = u.x + (dx / len) * u.speed();
                     float ny  = std::clamp(u.y + (dy / len) * u.speed() + pushY,
@@ -124,11 +124,11 @@ void unitThread() {
                     states.push_back({i, {UnitState::Marching, bestTarget}});
                 }
             } else {
-                // No enemy visible: march straight toward the opposing base.
+                // Aucun ennemi visible : marcher droit vers la base adverse.
                 float dir = u.isEnemy ? -1.0f : 1.0f;
                 float nx  = u.x + dir * u.speed();
                 if ((u.isEnemy && nx <= 45.0f) || (!u.isEnemy && nx >= 755.0f)) {
-                    // Reached the base: deal 5 damage and remove the unit.
+                    // Base atteinte : infliger 5 dégâts et retirer l'unité.
                     if (u.isEnemy) playerBaseHp.fetch_sub(5);
                     else           enemyBaseHp.fetch_sub(5);
                     dmg.push_back({i, 9999});
@@ -144,7 +144,7 @@ void unitThread() {
         pool.applyMoves(moves);
         pool.applyDamage(dmg);
 
-        // Write updated positions into the back render buffer then swap.
+        // Écrire les positions mises à jour dans le tampon de rendu arrière, puis permuter.
         auto& back = renderDB.getBack();
         back.size  = 0;
         auto snap2 = pool.snapshot();
@@ -165,7 +165,7 @@ void unitThread() {
     }
 }
 
-// Thread 2 — counts player units and picks the type that counters the majority.
+// Thread 2 — compte les unités du joueur et choisit le type qui contre la majorité.
 void aiThread() {
     while (running) {
         auto t0 = Clock::now();
@@ -181,9 +181,9 @@ void aiThread() {
             if (snap[i].type == UnitType::Triangle) pTriangles++;
         }
 
-        // Counter-pick: most squares → send triangles (pierce armor);
-        //               most triangles → send squares (high HP absorbs);
-        //               otherwise → mirror with circles.
+        // Contre-pick : majorité de carrés → envoyer des triangles (percent l'armure) ;
+        //               majorité de triangles → envoyer des carrés (absorbent grâce aux HP élevés) ;
+        //               sinon → refléter avec des cercles.
         UnitType pick;
         if (pSquares >= pCircles && pSquares >= pTriangles)
             pick = UnitType::Triangle;
@@ -198,7 +198,7 @@ void aiThread() {
     }
 }
 
-// Thread 3 — drives the tick rate, waits at the barrier each cycle, spawns waves.
+// Thread 3 — cadence les ticks, attend à la barrière chaque cycle, déclenche les vagues.
 void logicThread() {
     using namespace std::chrono;
     auto nextTick = Clock::now();
@@ -208,13 +208,13 @@ void logicThread() {
 
         if (waves.consumeSpawn()) {
             int waveNum  = waves.getWave();
-            int waveGold = GOLD_PER_WAVE + (waveNum - 1) * 10;  // +10 gold per wave
+            int waveGold = GOLD_PER_WAVE + (waveNum - 1) * 10;  // +10 or par vague
             int g = waveGold + gold.load();
             gold.store(0);
             UnitType pt, at;
             { std::lock_guard lock(waves.mx); pt = waves.playerSelected; at = waves.aiSelected; }
-            spawnWave(false, pt, g);         // player side gets banked gold bonus
-            spawnWave(true,  at, waveGold);  // AI always gets the base wave gold
+            spawnWave(false, pt, g);         // le joueur reçoit le bonus d'or accumulé
+            spawnWave(true,  at, waveGold);  // l'IA reçoit toujours l'or de base de la vague
         }
 
         barrier.wait();

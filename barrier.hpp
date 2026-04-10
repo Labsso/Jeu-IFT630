@@ -4,8 +4,8 @@
 #include <atomic>
 #include <cstdint>
 
-// Reusable barrier: blocks each caller until all `total` participants have arrived.
-// Uses an epoch counter so late arrivals from the previous round don't deadlock.
+// Barrière réutilisable : bloque chaque appelant jusqu'à ce que tous les `total` participants soient arrivés.
+// Utilise un compteur d'époque pour que les arrivées tardives du tour précédent ne provoquent pas d'interblocage.
 struct FrameBarrier {
     std::mutex mx;
     std::condition_variable cv;
@@ -15,7 +15,7 @@ struct FrameBarrier {
 
     explicit FrameBarrier(int n) : total(n) {}
 
-    // Blocks until all threads have called wait(), then releases everyone.
+    // Bloque jusqu'à ce que tous les threads aient appelé wait(), puis libère tout le monde.
     void wait() {
         std::unique_lock lock(mx);
         uint64_t myEpoch = epoch.load();

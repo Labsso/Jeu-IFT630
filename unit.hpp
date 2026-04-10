@@ -10,9 +10,9 @@ struct Unit {
     bool      isEnemy = false;
     UnitType  type    = UnitType::Circle;
     UnitState state   = UnitState::Marching;
-    int       target  = -1;     // pool index of current attack target, -1 = none
-    int       atkTimer = 0;     // ticks until next attack is allowed
-    float     laneY   = 0.0f;  // vertical position assigned at spawn
+    int       target  = -1;     // index dans le pool de la cible d'attaque actuelle, -1 = aucune
+    int       atkTimer = 0;     // ticks avant que la prochaine attaque soit autorisée
+    float     laneY   = 0.0f;  // position verticale assignée au spawn
 
     float radius() const {
         switch (type) {
@@ -42,7 +42,7 @@ struct Unit {
             default:                 return 3;
         }
     }
-    // Square units absorb 2 damage; triangles pierce armor entirely.
+    // Les carrés absorbent 2 dégâts ; les triangles percent l'armure entièrement.
     int armor() const { return type == UnitType::Square ? 2 : 0; }
 
     int atkCooldownMax() const {

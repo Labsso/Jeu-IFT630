@@ -2,16 +2,16 @@
 #include "unit.hpp"
 #include <mutex>
 
-// Counts down a per-wave timer and records unit-type selections for both sides.
+// Décompte un minuteur par vague et enregistre les sélections de type d'unité pour les deux camps.
 struct WaveSystem {
     std::mutex mx;
     int   waveNumber    = 1;
-    float timer         = 10.0f;  // seconds until next spawn
+    float timer         = 10.0f;  // secondes avant le prochain spawn
     bool  spawnPending  = false;
     UnitType playerSelected = UnitType::Circle;
     UnitType aiSelected     = UnitType::Circle;
 
-    // Advances the timer by dt seconds; sets spawnPending when it hits 0.
+    // Avance le minuteur de dt secondes ; active spawnPending quand il atteint 0.
     void update(float dt) {
         std::lock_guard lock(mx);
         timer -= dt;
@@ -22,7 +22,7 @@ struct WaveSystem {
         }
     }
 
-    // Returns true (and clears the flag) if a spawn was triggered this tick.
+    // Retourne true (et efface le drapeau) si un spawn a été déclenché ce tick.
     bool consumeSpawn() {
         std::lock_guard lock(mx);
         if (!spawnPending) return false;

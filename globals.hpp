@@ -8,14 +8,14 @@
 #include <atomic>
 #include <mutex>
 
-// All global singletons shared across threads.
-// Defined in globals.cpp; declared extern here so every TU can access them.
+// Tous les singletons globaux partagés entre les threads.
+// Définis dans globals.cpp ; déclarés extern ici pour que chaque unité de traduction puisse y accéder.
 
 extern UnitPool      pool;
 extern DoubleBuffer  renderDB;
 extern WaveSystem    waves;
 extern Profiler      profiler;
-extern FrameBarrier  barrier;   // 3 participants: unitThread, aiThread, logicThread
+extern FrameBarrier  barrier;   // 3 participants : unitThread, aiThread, logicThread
 extern SpatialGrid   grid;
 extern std::mutex    gridMutex;
 

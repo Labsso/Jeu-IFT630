@@ -6,15 +6,15 @@
 #include <atomic>
 #include <vector>
 
-// Fixed-size pool of units with reader-writer locking.
-// Writers take a unique_lock; readers (snapshot) take a shared_lock.
+// Pool d'unités à taille fixe avec verrouillage lecteur-écrivain.
+// Les écrivains prennent un unique_lock ; les lecteurs prennent un shared_lock.
 struct UnitPool {
     std::array<Unit, MAX_UNITS> data{};
     mutable std::shared_mutex   rwMutex;
     std::atomic<int>            aliveCount{0};
 
-    // Finds the first free slot, initialises it, and returns its index.
-    // Returns -1 if the pool is full.
+    // Trouve le premier emplacement libre, l'initialise et retourne son index.
+    // Retourne -1 si le pool est plein.
     int alloc(Unit u) {
         u.alive    = true;
         u.hp = u.maxHp = u.initHp();
@@ -32,20 +32,20 @@ struct UnitPool {
         return -1;
     }
 
-    // Returns a copy of the entire array; safe to read without the lock afterwards.
+    // Retourne une copie du tableau entier ; ok à lire sans verrou ensuite.
     std::array<Unit, MAX_UNITS> snapshot() const {
         std::shared_lock lock(rwMutex);
         return data;
     }
 
-    // Decrements atkTimer for every living unit (called once per tick).
+    // Décrémente atkTimer pour chaque unité vivante (appelé une fois par tick).
     void tickAtkTimers() {
         std::unique_lock lock(rwMutex);
         for (auto& u : data)
             if (u.alive && u.atkTimer > 0) u.atkTimer--;
     }
 
-    // Applies a batch of position updates computed by unitThread.
+    // Applique un lot de mises à jour de positions calculées par unitThread.
     void applyMoves(const std::vector<std::pair<int, std::pair<float, float>>>& moves) {
         std::unique_lock lock(rwMutex);
         for (auto& [idx, pos] : moves) {
@@ -55,7 +55,7 @@ struct UnitPool {
         }
     }
 
-    // Applies a batch of damage values; kills units whose hp reaches 0.
+    // Applique un lot de valeurs de dégâts ; tue les unités dont les HP atteignent 0.
     void applyDamage(const std::vector<std::pair<int, int>>& patches) {
         std::unique_lock lock(rwMutex);
         for (auto& [idx, d] : patches) {
@@ -68,7 +68,7 @@ struct UnitPool {
         }
     }
 
-    // Applies a batch of (state, target) pairs and resets atkTimer when entering Attacking.
+    // Applique un lot de paires (état, cible) et réinitialise atkTimer lors du passage en état Attacking.
     void applyStates(const std::vector<std::pair<int, std::pair<UnitState, int>>>& states) {
         std::unique_lock lock(rwMutex);
         for (auto& [idx, sv] : states) {

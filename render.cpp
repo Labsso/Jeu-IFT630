@@ -17,7 +17,7 @@ void drawUnit(const RenderEntry& e) {
         }
     }
 
-    // HP bar: green > 50%, yellow > 25%, red otherwise
+    // Barre de HP : vert > 50 %, jaune > 25 %, rouge sinon
     float pct = (float)e.hp / e.maxHp;
     int bx = (int)(e.x - 12), by = (int)(e.y - e.r - 7);
     DrawRectangle(bx, by, 24, 3, DARKGRAY);

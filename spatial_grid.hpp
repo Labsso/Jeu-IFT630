@@ -4,21 +4,21 @@
 #include <vector>
 #include <algorithm>
 
-// Uniform grid that maps world positions to buckets for fast neighbour queries.
-// Each cell covers CELL_W x CELL_H pixels.  Must be rebuilt every tick.
+// Grille uniforme qui associe les positions du monde à des buckets pour des requêtes de voisinage rapides.
+// Chaque cellule couvre CELL_W x CELL_H pixels. Doit être reconstruite à chaque tick.
 struct SpatialGrid {
     std::array<std::vector<int>, GRID_COLS * GRID_ROWS> cells;
 
     void clear() { for (auto& c : cells) c.clear(); }
 
-    // Inserts unit index idx at world position (x, y).
+    // Insère l'index d'unité idx à la position monde (x, y).
     void insert(int idx, float x, float y) {
         int col = std::clamp((int)(x / CELL_W), 0, GRID_COLS - 1);
         int row = std::clamp((int)((y - GAME_TOP) / CELL_H), 0, GRID_ROWS - 1);
         cells[row * GRID_COLS + col].push_back(idx);
     }
 
-    // Fills out with indices from the 3x3 neighbourhood around (x, y).
+    // Remplit out avec les indices du voisinage 3x3 autour de (x, y).
     void nearby(float x, float y, std::vector<int>& out) const {
         out.clear();
         int col = std::clamp((int)(x / CELL_W), 0, GRID_COLS - 1);

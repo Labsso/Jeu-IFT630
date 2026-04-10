@@ -1,7 +1,8 @@
 // Miragine War
-// Architecture: 3 worker threads (unitThread, aiThread, logicThread) synchronised
-// by a barrier each tick (~60 Hz).  The main thread renders freely at 60 FPS and
-// is NOT part of the barrier — it reads the double-buffered render data lock-free.
+// Architecture : 3 threads de travail (unitThread, aiThread, logicThread) synchronisés
+// par une barrière à chaque tick (~60 Hz). Le thread principal effectue le rendu librement
+// à 60 FPS et NE fait PAS partie de la barrière — il lit les données de rendu en double
+// tampon sans verrou.
 
 #include <raylib.h>
 #include <thread>
@@ -15,7 +16,7 @@ int main() {
     SetTargetFPS(60);
     srand((unsigned)time(nullptr));
 
-    // Spawn the first wave before starting threads so the pool isn't empty.
+    // Spawner la première vague avant de démarrer les threads pour que le pool ne soit pas vide.
     spawnWave(false, UnitType::Circle, GOLD_PER_WAVE);
     spawnWave(true,  UnitType::Circle, GOLD_PER_WAVE);
 
@@ -28,7 +29,7 @@ int main() {
 
         bool gameOver = (playerBaseHp.load() <= 0 || enemyBaseHp.load() <= 0);
 
-        // Input: keys 1/2/3 select the unit type spawned next wave.
+        // Entrée : les touches 1/2/3 sélectionnent le type d'unité à spawner à la prochaine vague.
         if (!gameOver) {
             if (IsKeyPressed(KEY_ONE))   { std::lock_guard lock(waves.mx); waves.playerSelected = UnitType::Circle;   }
             if (IsKeyPressed(KEY_TWO))   { std::lock_guard lock(waves.mx); waves.playerSelected = UnitType::Triangle; }
@@ -38,11 +39,11 @@ int main() {
         BeginDrawing();
         ClearBackground({15, 15, 25, 255});
 
-        // Play area background + centre line
+        // Fond de la zone de jeu + ligne centrale
         DrawRectangle(0, (int)GAME_TOP, SCREEN_W, (int)GAME_H, {25, 28, 40, 255});
         DrawLine(SCREEN_W / 2, (int)GAME_TOP, SCREEN_W / 2, (int)GAME_BOT, {60, 60, 80, 100});
 
-        // Left base (player) — filled proportionally to remaining HP
+        // Base gauche (joueur) — remplie proportionnellement aux HP restants
         int php = std::max(0, playerBaseHp.load());
         int ehp = std::max(0, enemyBaseHp.load());
         DrawRectangle(0, (int)GAME_TOP, 35, (int)GAME_H, {15, 15, 45, 255});
@@ -50,20 +51,20 @@ int main() {
         DrawRectangleLines(0, (int)GAME_TOP, 35, (int)GAME_H, DARKBLUE);
         DrawText(TextFormat("%d", php), 4, (int)GAME_TOP + 5, 12, LIGHTGRAY);
 
-        // Right base (enemy)
+        // Base droite (ennemi)
         DrawRectangle(765, (int)GAME_TOP, 35, (int)GAME_H, {45, 15, 15, 255});
         DrawRectangle(767, (int)(GAME_TOP + GAME_H * (1.0f - ehp / 100.0f)), 31, (int)(GAME_H * ehp / 100.0f), RED);
         DrawRectangleLines(765, (int)GAME_TOP, 35, (int)GAME_H, MAROON);
         DrawText(TextFormat("%d", ehp), 770, (int)GAME_TOP + 5, 12, LIGHTGRAY);
 
-        // Units — read from the front buffer, no lock needed (double-buffered).
+        // Unités — lues depuis le tampon avant, sans verrou (double tampon).
         const auto& front = renderDB.getFront();
         for (int i = 0; i < front.size; i++) drawUnit(front.e[i]);
 
-        // Top HUD
+        // HUD supérieur
         DrawRectangle(0, 0, SCREEN_W, (int)GAME_TOP, {10, 10, 18, 245});
 
-        // Wave timer bar
+        // Barre de minuterie de vague
         float wTimer   = waves.getTimer();
         int   wNum     = waves.getWave();
         DrawText(TextFormat("Vague %d", wNum), SCREEN_W / 2 - 38, 6, 20, WHITE);
@@ -74,12 +75,12 @@ int main() {
         DrawRectangleLines(SCREEN_W / 2 - 80, 32, 160, 10, GRAY);
         DrawText(TextFormat("%.1fs", wTimer), SCREEN_W / 2 - 12, 31, 11, LIGHTGRAY);
 
-        // Gold display
+        // Affichage de l'or
         DrawText(TextFormat("Gold: %d", gold.load()), 10, 8, 18, GOLD);
         int nextWaveGold = GOLD_PER_WAVE + (waves.getWave() - 1) * 10;
         DrawText(TextFormat("+%d prochaine vague", nextWaveGold), 10, 30, 12, {200, 160, 0, 180});
 
-        // Unit selection buttons
+        // Boutons de sélection d'unité
         UnitType sel;
         { std::lock_guard lock(waves.mx); sel = waves.playerSelected; }
         struct Btn { UnitType t; const char* label; const char* stats; Color col; };
@@ -101,7 +102,7 @@ int main() {
 
         DrawText(TextFormat("%d unites", pool.aliveCount.load()), 658, 8, 13, LIGHTGRAY);
 
-        // Bottom status bar: per-thread frame times + AI selection
+        // Barre de statut inférieure : temps de frame par thread + sélection IA
         DrawRectangle(0, (int)GAME_BOT, SCREEN_W, SCREEN_H - (int)GAME_BOT, {10, 10, 18, 220});
         DrawText(TextFormat("unitThread: %.2fms", profiler.avg(0)),  10, (int)GAME_BOT + 10, 12, SKYBLUE);
         DrawText(TextFormat("aiThread:   %.2fms", profiler.avg(1)), 220, (int)GAME_BOT + 10, 12, ORANGE);
@@ -113,7 +114,7 @@ int main() {
                               : (aiSel == UnitType::Square  ? "Carre" : "Cercle");
         DrawText(TextFormat("IA joue: %s", aiSelName), 545, (int)GAME_BOT + 10, 12, RED);
 
-        // Game-over overlay
+        // Superposition de fin de partie
         if (gameOver) {
             DrawRectangle(200, 220, 400, 100, Fade(BLACK, 0.88f));
             DrawRectangleLines(200, 220, 400, 100, GRAY);
@@ -128,7 +129,7 @@ int main() {
         EndDrawing();
     }
 
-    // Signal threads to stop, then unblock the barrier in case they're waiting.
+    // Signaler aux threads de s'arrêter, puis débloquer la barrière s'ils sont en attente.
     running = false;
     barrier.wait();
     tUnits.join();
