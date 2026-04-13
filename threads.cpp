@@ -53,8 +53,8 @@ void unitThread() {
                 if (snap[i].alive) grid.insert(i, snap[i].x, snap[i].y);
         }
 
-        std::vector<std::pair<int, std::pair<float, float>>>   moves;
-        std::vector<std::pair<int, int>>                       dmg;
+        std::vector<std::pair<int, std::pair<float, float>>> moves;
+        std::vector<std::pair<int, int>> dmg;
         std::vector<std::pair<int, std::pair<UnitState, int>>> states;
 
         for (int i = 0; i < MAX_UNITS; i++) {
@@ -182,15 +182,15 @@ void aiThread() {
         }
 
         // Contre-pick : majorité de carrés → envoyer des triangles (percent l'armure) ;
-        //               majorité de triangles → envoyer des carrés (absorbent grâce aux HP élevés) ;
-        //               sinon → refléter avec des cercles.
+        //               majorité de triangles → envoyer des cercles ;
+        //               sinon → majorité de cercle → envoyer carrés (armure).
         UnitType pick;
         if (pSquares >= pCircles && pSquares >= pTriangles)
             pick = UnitType::Triangle;
         else if (pTriangles >= pCircles)
-            pick = UnitType::Square;
-        else
             pick = UnitType::Circle;
+        else
+            pick = UnitType::Square;
 
         { std::lock_guard lock(waves.mx); waves.aiSelected = pick; }
 

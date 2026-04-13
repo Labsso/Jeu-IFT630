@@ -4,6 +4,7 @@
 #include <array>
 #include <shared_mutex>
 #include <atomic>
+#include <mutex>
 #include <vector>
 
 // Pool d'unités à taille fixe avec verrouillage lecteur-écrivain.

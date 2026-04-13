@@ -80,6 +80,21 @@ int main() {
         int nextWaveGold = GOLD_PER_WAVE + (waves.getWave() - 1) * 10;
         DrawText(TextFormat("+%d prochaine vague", nextWaveGold), 10, 30, 12, {200, 160, 0, 180});
 
+
+        DrawText(TextFormat("%d unites", pool.aliveCount.load()), 658, 8, 13, LIGHTGRAY);
+
+        // Barre de statut inférieure : temps de frame par thread + sélection IA
+        DrawRectangle(0, (int)GAME_BOT, SCREEN_W, SCREEN_H - (int)GAME_BOT, {10, 10, 18, 220});
+        DrawText(TextFormat("unitThread: %.2fms", profiler.avg(0)),  10, (int)GAME_BOT + 10, 12, SKYBLUE);
+        DrawText(TextFormat("aiThread:   %.2fms", profiler.avg(1)), 10, (int)GAME_BOT + 28, 12, ORANGE);
+        DrawText(TextFormat("FPS: %d", GetFPS()),                   10, (int)GAME_BOT + 46, 12, GREEN);
+
+        UnitType aiSel;
+        { std::lock_guard lock(waves.mx); aiSel = waves.aiSelected; }
+        const char* aiSelName = aiSel == UnitType::Triangle ? "Triangle"
+                              : (aiSel == UnitType::Square  ? "Carre" : "Cercle");
+        DrawText(TextFormat("IA joue: %s", aiSelName), 10, (int)GAME_BOT + 64, 12, RED);
+
         // Boutons de sélection d'unité
         UnitType sel;
         { std::lock_guard lock(waves.mx); sel = waves.playerSelected; }
@@ -87,34 +102,21 @@ int main() {
         Btn btns[3] = {
             {UnitType::Circle,   "[1] Cercle",   "10g  HP:12  DMG:3", BLUE},
             {UnitType::Triangle, "[2] Triangle", "20g  HP:6   DMG:5", SKYBLUE},
-            {UnitType::Square,   "[3] Carre",    "30g  HP:25  ARM:2", DARKBLUE},
+            {UnitType::Square,   "[3] Carre",    "30g  HP:25  ARM:4", DARKBLUE},
         };
         for (int b = 0; b < 3; b++) {
             int bx     = 150 + b * 170;
             bool active = sel == btns[b].t;
-            DrawRectangle(bx, 4, 158, 70, active ? Color{35, 55, 95, 255} : Color{18, 18, 32, 255});
-            DrawRectangleLines(bx, 4, 158, 70, active ? SKYBLUE : Color{55, 55, 75, 255});
-            drawUnitIcon(bx + 18.0f, 38.0f, 14.0f, btns[b].t, btns[b].col);
-            DrawText(btns[b].label, bx + 36, 12, 14, active ? WHITE : LIGHTGRAY);
-            DrawText(btns[b].stats, bx + 36, 32, 11, active ? LIGHTGRAY : Color{100, 100, 120, 255});
-            if (active) DrawText("SELECTIONNE", bx + 36, 52, 10, SKYBLUE);
+            DrawRectangle(bx, (int)GAME_BOT + 4, 158, 70, active ? Color{35, 55, 95, 255} : Color{18, 18, 32, 255});
+            DrawRectangleLines(bx, (int)GAME_BOT + 4, 158, 70, active ? SKYBLUE : Color{55, 55, 75, 255});
+            drawUnitIcon(bx + 18.0f, (int)GAME_BOT + 38.0f, 14.0f, btns[b].t, btns[b].col);
+            DrawText(btns[b].label, bx + 36, (int)GAME_BOT + 12, 14, active ? WHITE : LIGHTGRAY);
+            DrawText(btns[b].stats, bx + 36, (int)GAME_BOT + 32, 11, active ? LIGHTGRAY : Color{100, 100, 120, 255});
+            if (active) DrawText("SELECTIONNE", bx + 36, (int)GAME_BOT + 52, 10, SKYBLUE);
         }
 
-        DrawText(TextFormat("%d unites", pool.aliveCount.load()), 658, 8, 13, LIGHTGRAY);
-
-        // Barre de statut inférieure : temps de frame par thread + sélection IA
-        DrawRectangle(0, (int)GAME_BOT, SCREEN_W, SCREEN_H - (int)GAME_BOT, {10, 10, 18, 220});
-        DrawText(TextFormat("unitThread: %.2fms", profiler.avg(0)),  10, (int)GAME_BOT + 10, 12, SKYBLUE);
-        DrawText(TextFormat("aiThread:   %.2fms", profiler.avg(1)), 220, (int)GAME_BOT + 10, 12, ORANGE);
-        DrawText(TextFormat("FPS: %d", GetFPS()),                   420, (int)GAME_BOT + 10, 12, GREEN);
-
-        UnitType aiSel;
-        { std::lock_guard lock(waves.mx); aiSel = waves.aiSelected; }
-        const char* aiSelName = aiSel == UnitType::Triangle ? "Triangle"
-                              : (aiSel == UnitType::Square  ? "Carre" : "Cercle");
-        DrawText(TextFormat("IA joue: %s", aiSelName), 545, (int)GAME_BOT + 10, 12, RED);
-
         // Superposition de fin de partie
+        // Game-over overlay
         if (gameOver) {
             DrawRectangle(200, 220, 400, 100, Fade(BLACK, 0.88f));
             DrawRectangleLines(200, 220, 400, 100, GRAY);

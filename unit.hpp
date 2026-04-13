@@ -30,19 +30,19 @@ struct Unit {
     }
     float speed() const {
         switch (type) {
-            case UnitType::Triangle: return 2.2f;
-            case UnitType::Square:   return 0.7f;
-            default:                 return 1.4f;
+            case UnitType::Triangle: return 0.55f;
+            case UnitType::Square:   return 0.175f;
+            default:                 return 0.35f;
         }
     }
     int damage() const {
         switch (type) {
             case UnitType::Triangle: return 5;
-            case UnitType::Square:   return 2;
+            case UnitType::Square:   return 3;
             default:                 return 3;
         }
     }
-    // Les carrés absorbent 2 dégâts ; les triangles percent l'armure entièrement.
+    // Les carrés absorbent 4 dégâts ; les triangles percent l'armure entièrement.
     int armor() const { return type == UnitType::Square ? 2 : 0; }
 
     int atkCooldownMax() const {
