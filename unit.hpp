@@ -43,7 +43,7 @@ struct Unit {
         }
     }
     // Les carrés absorbent 4 dégâts ; les triangles percent l'armure entièrement.
-    int armor() const { return type == UnitType::Square ? 2 : 0; }
+    int armor() const { return type == UnitType::Square ? 4 : 0; }
 
     int atkCooldownMax() const {
         switch (type) {

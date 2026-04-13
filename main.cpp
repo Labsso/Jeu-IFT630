@@ -116,7 +116,6 @@ int main() {
         }
 
         // Superposition de fin de partie
-        // Game-over overlay
         if (gameOver) {
             DrawRectangle(200, 220, 400, 100, Fade(BLACK, 0.88f));
             DrawRectangleLines(200, 220, 400, 100, GRAY);
