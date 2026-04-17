@@ -6,29 +6,35 @@
 #include <chrono>
 #include <vector>
 
-// Répartit les unités uniformément sur la hauteur de l'arène, une par tranche de couloir.
+// Répartit les unités en groupe autour d'un centre Y aléatoire.
 void spawnWave(bool isEnemy, UnitType type, int availableGold) {
     Unit tmp; tmp.type = type;
     int cost = tmp.cost();
     if (cost <= 0) return;
     int count = availableGold / cost;
 
-    constexpr float margin   = 40.0f;
+    constexpr float margin    = 40.0f;
+    constexpr float groupSpread = 30.0f;  // rayon du groupe en Y
+    constexpr float xSpread     = 20.0f;  // décalage X aléatoire dans le groupe
     float arenaTop = GAME_TOP + margin;
     float arenaBot = GAME_BOT - margin;
-    float arenaH   = arenaBot - arenaTop;
+
+    // Centre Y aléatoire dans l'arène
+    float centerY = arenaTop + ((float)rand() / (float)RAND_MAX) * (arenaBot - arenaTop);
+
+    float baseX = isEnemy ? 752.0f : 48.0f;
 
     for (int i = 0; i < count; i++) {
-        float laneY = count > 1
-            ? arenaTop + arenaH * ((float)i / (float)(count - 1))
-            : arenaTop + arenaH * 0.5f;
+        float offsetY = (((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f) * groupSpread;
+        float offsetX = (((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f) * xSpread;
+        float spawnY  = std::max(arenaTop, std::min(arenaBot, centerY + offsetY));
 
         Unit u;
         u.type    = type;
         u.isEnemy = isEnemy;
-        u.laneY   = laneY;
-        u.x       = isEnemy ? 752.0f : 48.0f;  // spawn près du bord de sa propre base
-        u.y       = laneY;
+        u.laneY   = spawnY;
+        u.x       = baseX + offsetX;
+        u.y       = spawnY;
         pool.alloc(u);
     }
 }
