@@ -19,7 +19,7 @@ struct Profiler {
         double avg() const { return total / 60.0; }
     };
 
-    std::array<Channel, 3> ch;  // ch[0]=unitThread, ch[1]=aiThread, ch[2]=threadDeRendu
+    std::array<Channel, 4> ch;  // ch[0]=unitThread, ch[1]=aiThread, ch[2]=threadDeRendu, ch[3]=logicThread
     std::mutex mx;
 
     void record(int id, double ms) { std::lock_guard lock(mx); ch[id].push(ms); }

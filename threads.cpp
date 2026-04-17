@@ -44,9 +44,9 @@ void spawnWave(bool isEnemy, UnitType type, int availableGold) {
 void unitThread() {
     std::vector<int> nearby;
     while (running) {
-        auto t0 = Clock::now();
         barrier.wait();
         if (!running) break;
+        auto t0 = Clock::now();
 
         pool.tickAtkTimers();
         auto snap = pool.snapshot();
@@ -174,9 +174,9 @@ void unitThread() {
 // Thread 2 — compte les unités du joueur et choisit le type qui contre la majorité.
 void aiThread() {
     while (running) {
-        auto t0 = Clock::now();
         barrier.wait();
         if (!running) break;
+        auto t0 = Clock::now();
 
         auto snap = pool.snapshot();
         int pCircles = 0, pSquares = 0, pTriangles = 0;
@@ -210,6 +210,7 @@ void logicThread() {
     auto nextTick = Clock::now();
 
     while (running) {
+        auto t0 = Clock::now();
         waves.update(TICK_MS / 1000.0f);
 
         if (waves.consumeSpawn()) {
@@ -223,6 +224,7 @@ void logicThread() {
             spawnWave(true,  at, waveGold);  // l'IA reçoit toujours l'or de base de la vague
         }
 
+        profiler.record(3, Ms(Clock::now() - t0).count());
         barrier.wait();
         if (!running) break;
 

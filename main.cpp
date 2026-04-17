@@ -85,15 +85,16 @@ int main() {
 
         // Barre de statut inférieure : temps de frame par thread + sélection IA
         DrawRectangle(0, (int)GAME_BOT, SCREEN_W, SCREEN_H - (int)GAME_BOT, {10, 10, 18, 220});
-        DrawText(TextFormat("unitThread: %.2fms", profiler.avg(0)),  10, (int)GAME_BOT + 10, 12, SKYBLUE);
-        DrawText(TextFormat("aiThread:   %.2fms", profiler.avg(1)), 10, (int)GAME_BOT + 28, 12, ORANGE);
-        DrawText(TextFormat("FPS: %d", GetFPS()),                   10, (int)GAME_BOT + 46, 12, GREEN);
+        DrawText(TextFormat("unitThread:  %.4fms", profiler.avg(0)), 10, (int)GAME_BOT + 10, 12, SKYBLUE);
+        DrawText(TextFormat("aiThread:    %.4fms", profiler.avg(1)), 10, (int)GAME_BOT + 28, 12, ORANGE);
+        DrawText(TextFormat("logicThread: %.4fms", profiler.avg(3)), 10, (int)GAME_BOT + 46, 12, YELLOW);
+        DrawText(TextFormat("FPS: %d", GetFPS()),                    10, (int)GAME_BOT + 64, 12, GREEN);
 
         UnitType aiSel;
         { std::lock_guard lock(waves.mx); aiSel = waves.aiSelected; }
         const char* aiSelName = aiSel == UnitType::Triangle ? "Triangle"
                               : (aiSel == UnitType::Square  ? "Carre" : "Cercle");
-        DrawText(TextFormat("IA joue: %s", aiSelName), 10, (int)GAME_BOT + 64, 12, RED);
+        DrawText(TextFormat("IA joue: %s", aiSelName), 10, (int)GAME_BOT + 82, 12, RED);
 
         // Boutons de sélection d'unité
         UnitType sel;
